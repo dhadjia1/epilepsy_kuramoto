@@ -126,3 +126,10 @@ def get_instantaneous_FR(spiketrain, sampling_period, t_start=0., t_stop=5000.):
 
     spiketrain = SpikeTrain(spiketrain, t_stop, units='ms', t_start=t_start)
     return ir_fnc(spiketrain, sampling_period*ms, kernel='auto')
+
+def generate_poisson_spike_train(rate, tstop, tstart=0., as_array=True):
+    from elephant.spike_train_generation import homogeneous_poisson_process
+    from quantities import ms, Hz
+
+    return homogeneous_poisson_process(rate*Hz, t_start=tstart * ms, t_stop=tstop*ms, as_array=as_array)
+
