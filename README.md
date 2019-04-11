@@ -2,7 +2,7 @@
 
 uses coupled kuramoto oscillators to investigate emergence of network phenomenon in izhikevich neurons.
 
-Kuromoto model is of the form: $\frac{d\phi}{dt} = w_{i} - \sum_{j=1}{N}K_{ij}sin(\phi_{i} - \phi_{j} $, where $\phi$ is phase, $\w_{i}$ is the natural frequency of oscillator $i$, and $K_{ij}$ is the coupling between oscillator $i$ and $j$.
+Kuromoto model is of the form: $[!\frac{d\phi}{dt} = w_{i} - \sum_{j=1}{N}K_{ij}sin(\phi_{i} - \phi_{j}!]$, where $[!\phi!]$ is phase, $[!\w_{i}$!]$ is the natural frequency of oscillator $[!i!]$, and $[!K_{ij}!]$ is the coupling between oscillator $[!i!]$ and $[!j!]$.
 
 Figure 1: N = 10 oscillators. Sim A: weak coupling with heterogeneous frequencies. Sim B: less weak coupling, more homogeneous frequencies. (Top) Sum of oscillator amplitudes vs time. (Bottom) Population synchronization over time.
 
