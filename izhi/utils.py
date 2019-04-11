@@ -118,3 +118,11 @@ def get_ISI(spike_train):
 def get_CV(spike_train):
     from elephant.statistics import cv
     return cv(get_ISI(spike_train))
+
+def get_instantaneous_FR(spiketrain, sampling_period, t_start=0., t_stop=5000.):
+    from elephant.statistics import instantaneous_rate as ir_fnc
+    from neo import SpikeTrain
+    from quantities import ms
+
+    spiketrain = SpikeTrain(spiketrain, t_stop, units='ms', t_start=t_start)
+    return ir_fnc(spiketrain, sampling_period*ms, kernel='auto')
