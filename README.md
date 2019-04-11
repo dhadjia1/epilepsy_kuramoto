@@ -1,6 +1,6 @@
 # epilepsy_kuramoto
 
-Goal: Use coupled kuramoto oscillators to investigate emergence of network phenomenon in izhikevich neurons.
+Goal: Use coupled Kuramoto oscillators to investigate emergence of synchronized network phenomenon in Izhikevich neurons.
 
 Kuromoto model is a simple two-parameter model used to describe synchronization and has the form:<br><br>
 <img src="https://github.com/dhadjia1/epilepsy_kuramoto/blob/master/izhi/pics/CodeCogsEqn.gif">
