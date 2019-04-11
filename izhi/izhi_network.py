@@ -22,11 +22,13 @@ class IzhiNetwork(object):
     
         id_start = 0
         self.neurons = self.__instantiate_neurons(self.__nneurons, cell_type, id_start)
-        self.__generate_connections(len(spike_trains))
+        if spike_trains is not None:
+            self.__generate_connections(len(spike_trains))
         self.__create_synapses()
         if self.delay > 0.0: 
             self.__generate_random_inputs(rate=rate)
-        self.__insert_spiketrains(spike_trains)
+        if spike_trains is not None:
+            self.__insert_spiketrains(spike_trains)
 
     def __instantiate_neurons(self, n, cell_type, id_start):
         return [IzhiCell(cell_type, i + id_start) for i in range(n)]
