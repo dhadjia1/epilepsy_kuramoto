@@ -18,7 +18,7 @@ class IzhiNetwork(object):
         self.__stim_delay  = stim_delay
    
         self.stims, self.ncstims = [ [] for _ in range(self.__nneurons)], [ [] for _ in range(self.__nneurons)]
-        self.connections = []
+        self.connections = None
     
         id_start = 0
         self.neurons = self.__instantiate_neurons(self.__nneurons, cell_type, id_start)
@@ -50,6 +50,7 @@ class IzhiNetwork(object):
         
     
     def __generate_connections(self, N):
+        self.connections = []
         for i in range(N):
             random  = np.random.RandomState(seed=i)
             choices = random.choice([0,1], p=[1.-self.__pconnection, self.__pconnection], size=(self.__nneurons,))
