@@ -2,11 +2,11 @@
 
 Goal: Use coupled kuramoto oscillators to investigate emergence of network phenomenon in izhikevich neurons.
 
-Kuromoto model is of the form:<br><br>
+Kuromoto model is a simple two-parameter model used to describe synchronization and has the form:<br><br>
 <img src="https://github.com/dhadjia1/epilepsy_kuramoto/blob/master/izhi/pics/CodeCogsEqn.gif">
 <br><br>where $\phi$ is phase, $\w_{i}$ is the natural frequency of oscillator $i$, and $K_{ij}$ is the coupling between oscillator $i$ and $j$.
 
-Figure 1: N = 10 oscillators. Sim A: weak coupling with heterogeneous frequencies. Sim B: less weak coupling, more homogeneous frequencies. (Top) Sum of oscillator amplitudes vs time. (Bottom) Population synchronization over time.
+Figure 1: N = 10 oscillators. Sim A: weak coupling with heterogeneous natural frequencies. Sim B: less weak coupling, more homogeneous natural frequencies. (Top) Sum of oscillator amplitudes vs time. (Bottom) Population synchronization over time.
 
 <img src="https://github.com/dhadjia1/epilepsy_kuramoto/blob/master/izhi/pics/kurosim-synch.png">
 
