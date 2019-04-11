@@ -8,7 +8,7 @@ from scipy.signal import hilbert
 
 class kuramoto_network(object):
 
-    def __init__(self, noscillators, frequencies, coupling, seed=0):
+    def __init__(self, noscillators, frequencies, coupling, init_phases=None, seed=0):
         self.__noscillators = noscillators
         self.__frequency = frequencies
 
@@ -16,7 +16,11 @@ class kuramoto_network(object):
             self.__coupling  = (np.ones((noscillators, noscillators)) - np.identity(noscillators)) * coupling
         else: self.__coupling = coupling
         self.__random = np.random.RandomState(seed)
-        self.__phase  = self.__random.uniform(-np.pi, np.pi, size=(self.__noscillators, ))
+   
+        if init_phases is None:
+            self.__phase  = self.__random.uniform(-np.pi, np.pi, size=(self.__noscillators, ))
+        else:
+            self.__phase = np.asarray(init_phases, dtype='float32')
 
     def simulate(self, steps, time):
         dynamic_phase = [self.__phase]
@@ -41,9 +45,8 @@ class kuramoto_network(object):
 
     def __calculate_synchrony(self,phases):
         mean_phase = np.mean(phases)
-        exp_mean_phase = cmath.exp(1j*mean_phase)
-        summ = 1./len(phases) * np.sum([cmath.exp(1j*phi) for phi in phases])
-        return np.absolute(np.divide(summ, exp_mean_phase)), mean_phase
+        r = 1./len(phases) * np.sum([cmath.exp(1j*(phi-mean_phase)) for phi in phases])
+        return np.absolute(r), mean_phase
 
     def __calculate_kuramoto(self, t, step, int_step):
         next_phases = np.zeros((self.__noscillators,))

@@ -18,7 +18,7 @@ def phase_to_angle(phases, dt):
     angles = []
     for n in xrange(len(phases)):
         current_angles = np.diff(phases[n,:] % (2. * np.pi)) / dt
-        med_filt_angles = medfilt(current_angles, kernel_size=5)
+        med_filt_angles = medfilt(current_angles, kernel_size=11)
         angles.append(med_filt_angles)
     return np.asarray(angles, dtype='float32')
 
@@ -103,3 +103,18 @@ def bin_activity(times, spike_lst, noscillators, dt=0.025, chunk=25):
         binned_spikes.append(curr_spikes)
         binned_times.append(curr_times)
     return binned_spikes, binned_times
+
+def get_PSTH(X, N, dt, filt=False):
+    histogram = np.sum(X,axis=0) / float(N * dt)
+    if filt:
+        from scipy.signal import medfilt
+        histogram = medfilt(histogram)
+    return histogram
+
+def get_ISI(spike_train):
+    from elephant.statistics import isi
+    return isi(spike_train)
+
+def get_CV(spike_train):
+    from elephant.statistics import cv
+    return cv(get_ISI(spike_train))
