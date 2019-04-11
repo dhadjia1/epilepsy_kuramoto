@@ -19,6 +19,6 @@ Figure 3: The amplitude of oscillators acquired from the Kuromoto model were use
 <img src="https://github.com/dhadjia1/epilepsy_kuramoto/blob/master/izhi/pics/spikes.png">
 
 
-Figure 4: (Top) Coefficient of variation (CV) and Inter Spike Interval (ISI) acquired from raster plots of Figure 3.
+Figure 4: (Top) Coefficient of variation (CV) and (Bottom) Inter Spike Interval (ISI) acquired from raster plots of Figure 3.
 
 <img src="https://github.com/dhadjia1/epilepsy_kuramoto/blob/master/izhi/pics/isi-cv.png">
