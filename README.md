@@ -2,7 +2,9 @@
 
 Goal: Use coupled kuramoto oscillators to investigate emergence of network phenomenon in izhikevich neurons.
 
-Kuromoto model is of the form: $\frac{d\phi}{dt} = w_{i} - \sum_{j=1}{N}K_{ij}sin(\phi_{i} - \phi_{j}$, where $\phi$ is phase, $\w_{i}$ is the natural frequency of oscillator $i$, and $K_{ij}$ is the coupling between oscillator $i$ and $j$.
+Kuromoto model is of the form:
+<img src="https://github.com/dhadjia1/epilepsy_kuramoto/blob/master/izhi/pics/CodeCogsEqn.gif">
+where $\phi$ is phase, $\w_{i}$ is the natural frequency of oscillator $i$, and $K_{ij}$ is the coupling between oscillator $i$ and $j$.
 
 Figure 1: N = 10 oscillators. Sim A: weak coupling with heterogeneous frequencies. Sim B: less weak coupling, more homogeneous frequencies. (Top) Sum of oscillator amplitudes vs time. (Bottom) Population synchronization over time.
 
@@ -19,4 +21,4 @@ Figure 3: The amplitude of oscillators acquired from the Kuromoto model were use
 
 Figure 4: (Top) Coefficient of variation (CV) and Inter Spike Interval (ISI) acquired from raster plots of Figure 3.
 
-<img src="https://github.com/dhadjia1/epilepsy_kuramoto/blob/master/izhi/pics/kurosim-fslide.png">
+<img src="https://github.com/dhadjia1/epilepsy_kuramoto/blob/master/izhi/pics/isi-cv.png">
