@@ -76,7 +76,6 @@ def get_layer(cells, layer):
     return neurons
 
 def get_spikes_from_cell_type(attr_dict, spike_dict, cell_type='e'):
-
     return_dict = {}
     for gid in sorted(spike_dict.keys()):
         if attr_dict[gid]['type'] == cell_type:
@@ -99,21 +98,29 @@ def spike_detection(trace, times, threshold=-25.):
 def extract_spikes(voltage, neuron_time):
     return spike_detection(voltage, neuron_time)
 
-def bin_activity(times, spike_lst, noscillators, dt=0.025, chunk=25):
+def bin_activity(times, spike_times, nneurons, dt=0.025, chunk=25):
     chunk = int(chunk / dt)
     binned_spikes, binned_times = [], []
-    for i in xrange(noscillators):
+    for i in xrange(nneurons):
+        current_spike_times = spike_times[i]
+        binary_spike_lst = []
+        for time in times:
+            if time in current_spike_times:
+                binary_spike_lst.append(1)
+            else:
+                binary_spike_lst.append(0)
+
         count = 0
         curr_spikes, curr_times = [], []
-        for (j,t) in enumerate(times[i]):
+        for (j,t) in enumerate(times):
             if j % chunk == 0 and j > 0:
                 curr_times.append(t)
                 curr_spikes.append(count)
                 count = 0
             else:
-                if spike_lst[i][j] == 1: count += 1
+                if binary_spike_lst[j] == 1: count += 1
         binned_spikes.append(curr_spikes)
-        binned_times.append(curr_times)
+        binned_times = curr_times
     return binned_spikes, binned_times
 
 def get_PSTH(X, N, dt, filt=False):
