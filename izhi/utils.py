@@ -65,27 +65,39 @@ def run_neuron_simulation(cell, inputs, times):
     return deepcopy(list(soma_v_vec)), deepcopy(list(t_vec))
 
 
-def spike_detection(trace, times):
+def get_layer(cells, layer):
+    if cells == {}:
+        raise Exception('cell attributes is not populated..')
+    neurons = {}
+    for gid in sorted(cells.keys()):
+        this_neuron = cells[gid]
+        if this_neuron['layer'] == layer:
+            neurons[gid] = this_neuron
+    return neurons
+
+def get_spikes_from_cell_type(attr_dict, spike_dict, cell_type='e'):
+
+    return_dict = {}
+    for gid in sorted(spike_dict.keys()):
+        if attr_dict[gid]['type'] == cell_type:
+            return_dict[gid] = spike_dict[gid]
+    return return_dict
+
+def spike_detection(trace, times, threshold=-25.):
     from peakutils.peak import indexes
 
     idxs = indexes(np.asarray(trace), thres=0.5, min_dist=2)
+    valid_idxs = []
+    for idx in idxs:
+        if trace[idx] >= threshold:
+            valid_idxs.append(idx)
+    idxs = valid_idxs
     spike_times = times[idxs]
-    spike_lst = []
-    for i in xrange(len(trace)):
-        if i in idxs:
-            spike_lst.append(1)
-        else:
-            spike_lst.append(0)
-    return spike_times, spike_lst
+    return np.asarray(spike_times)
     
     
-def extract_spikes(soma_voltages, neuron_times):
-    spike_times, spike_lst = [], []
-    for (i,voltages) in enumerate(soma_voltages):
-        curr_times, curr_spikes = spike_detection(voltages, neuron_times[i])
-        spike_times.append(curr_times)
-        spike_lst.append(curr_spikes)
-    return np.asarray(spike_times), np.asarray(spike_lst)
+def extract_spikes(voltage, neuron_time):
+    return spike_detection(voltage, neuron_time)
 
 def bin_activity(times, spike_lst, noscillators, dt=0.025, chunk=25):
     chunk = int(chunk / dt)

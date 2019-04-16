@@ -105,9 +105,9 @@ class SimpleIzhiNetwork(object):
 
 class IzhiModularizedNetwork(object):
 
-    def __init__(self, nlayer1, nneurons1, nlayer2, nneurons2, nid_start=1, feedback_layer1=False, feedback_layer2=True, prestim_delay=0., rate=20., p_connection=0.25, syn_weight=0.01, syn_delay=1., stim_weight=0.04, stim_delay=1., dt=0.025):
+    def __init__(self, nlayer1, nneurons1, nlayer2, nneurons2, nid_start=1, feedback_layer1=False, feedback_layer2=True, prestim_delay=0., rate=20., syn_weight=0.01, syn_delay=1., dt=0.025):
 
-        self.spiketrains = None
+        self.spiketrains = {}
         self.cell_attributes = {}
         self.kuramoto_network = {}
 
@@ -115,21 +115,18 @@ class IzhiModularizedNetwork(object):
         self.__nlayer2 = nlayer2
         self.__nneurons1 = nneurons1
         self.__nneurons2 = nneurons2
+        self.__nid_start = nid_start
         self.__feedback_layer1 = feedback_layer1
         self.__feedback_layer2 = feedback_layer2
         self.__prestim_delay = prestim_delay
         self.__rate = rate
-        self.__p_connection = p_connection
         self.__syn_weight = syn_weight
         self.__syn_delay  = syn_delay
-        self.__stim_weight = stim_weight
-        self.__stim_delay = stim_delay
         self.__dt = dt
 
-        nid_start = self.__generate_microcircuit(layer=1, nid_start=nid_start, feedback=self.__feedback_layer1)
-        nid_start = self.__generate_microcircuit(layer=2, nid_start=nid_start, feedback=self.__feedback_layer2)
+        self.__nid_start = self.__generate_microcircuit(layer=1, nid_start=self.__nid_start, feedback=self.__feedback_layer1)
+        self.__nid_start = self.__generate_microcircuit(layer=2, nid_start=self.__nid_start, feedback=self.__feedback_layer2)
         self.__generate_connections()
-
 
     def __generate_microcircuit(self, layer=1, nid_start=1, feedback=True):
         nodes = []
@@ -165,7 +162,7 @@ class IzhiModularizedNetwork(object):
             nid_start += (nneurons * 2)
             if feedback:
                 for (e,i) in zip(e_neurons, i_neurons):
-                    nc = generate_nc_connection(e, i, self.__syn_weight, self.__syn_delay)
+                    nc = generate_nc_connection(e, i, self.__syn_weight, self.__syn_delay, 'i')
                     self.cell_attributes[e.cell_obj.cellid]['connections'].append((i.cell_obj.cellid, nc))
                 
         return nid_start
@@ -174,8 +171,8 @@ class IzhiModularizedNetwork(object):
         from scipy.stats import norm
             
         random = np.random.RandomState(seed=init_seed)
-        l1_neurons = self.__get_layer(layer=1)
-        l2_neurons = self.__get_layer(layer=2)
+        l1_neurons = get_layer(self.cell_attributes, layer=1)
+        l2_neurons = get_layer(self.cell_attributes, layer=2)
        
         for l1_gid in sorted(l1_neurons.keys()):
             l1_neuron = l1_neurons[l1_gid]
@@ -188,57 +185,47 @@ class IzhiModularizedNetwork(object):
                 p_mod2mod = 1. - norm.cdf(abs(l1_module - l2_module), loc=0., scale=scale)
                 is_connected = random.choice([0, 1], p=[1.-p_mod2mod, p_mod2mod], size=(1,))
                 if is_connected:
-                    nc = generate_nc_connection(l2_neuron['object'], l1_neuron['object'], self.__syn_weight, self.__syn_delay)
+                    if l1_neuron['type'] == 'i': syn_type = 'i'
+                    else: syn_type = 'e'
+                    nc = generate_nc_connection(l2_neuron['object'], l1_neuron['object'], self.__syn_weight, self.__syn_delay, syn_type)
                     self.cell_attributes[l2_gid]['connections'].append((l1_gid, nc))
 
-
-    def __get_layer(self, layer=1):
-        if self.cell_attributes == {}:
-            raise Exception('Cell attributes has not been populated..')
-
-        neurons = {}
-        for gid in sorted(self.cell_attributes.keys()):
-            this_neuron = self.cell_attributes[gid]
-            if this_neuron['layer'] == layer:
-                neurons[gid] = this_neuron
-        return neurons
-
-    def __instantiate_kuromoto_network(self, frequencies, coupling, steps, time, init_phases=None, seed=0):
+    def instantiate_kuramoto_network(self, frequencies, coupling, steps, time, init_phases=None, seed=0):
         frequencies = frequencies[0:self.__nlayer1]
         coupling = coupling[0:self.__nlayer1, 0:self.__nlayer1]
         knet = kuramoto_network(self.__nlayer1, frequencies, coupling, init_phases=init_phases, seed=seed)
         dynamic_phase, dynamic_mean_phase, dynamic_synchrony, dynamic_time = knet.simulate(steps, time)
-        self.kuromoto_network['network'] = knet
-        self.kuromoto_network['dynamic phase'] = dynamic_phase
-        self.kuromoto_network['dynamic mean phase'] = dynamic_mean_phase
-        self.kuromoto_network['dynamic synchrony'] = dynamic_synchrony
-        self.kuromoto_network['dynamic time'] = dynamic_time
+        self.kuramoto_network['network'] = knet
+        self.kuramoto_network['dynamic phase'] = dynamic_phase
+        self.kuramoto_network['dynamic mean phase'] = dynamic_mean_phase
+        self.kuramoto_network['dynamic synchrony'] = dynamic_synchrony
+        self.kuramoto_network['dynamic time'] = dynamic_time
 
         angles     = phase_to_angle(dynamic_phase.T, dynamic_time[1] - dynamic_time[0])
         amplitudes = phase_to_amplitude(dynamic_phase.T, frequencies, dynamic_time)
-        self.kuromoto_network['angles'] = angles
-        self.kuromoto_network['amplitudes'] = amplitudes
+        self.kuramoto_network['angles'] = angles
+        self.kuramoto_network['amplitudes'] = amplitudes
 
-    def __simulate_kuromoto_layer1(self, T):
-        if self.kuromoto_network is None:
+    def simulate(self, T, verbose=False):
+        if self.kuramoto_network is None:
             raise Exception('Need to instantiate and run kuromoto network first')
-        times = self.kuromoto_network['dynamic time']
+        times = self.kuramoto_network['dynamic time']
         dur = times[1] - times[0]
         valid_time_idxs = np.where(times <= T)[0]
         times = times[valid_time_idxs]
-        amplitude = self.kuromoto_network['amplitudes'][valid_time_idxs,:] # T x N
+        amplitude = self.kuramoto_network['amplitudes'][valid_time_idxs,:] # T x N
 
-        l1_neurons = self.__get_layer(layer=1)
+        l1_neurons = get_layer(self.cell_attributes, layer=1)
         for l1_gid in sorted(l1_neurons.keys()):
-            l1_neuron = l1_neurons[gid]
+            l1_neuron = l1_neurons[l1_gid]
             l1_module = l1_neuron['module']
             this_amplitude = amplitude[:,l1_module]
 
             stims = []
-            for (t, time) in times:
-                stim = h.IClamp(l1_neuron.cell_obj.sec(0.5))
-                stim.delay = time
-                stim.dur = dur
+            for (t, time) in enumerate(times):
+                stim = h.IClamp(l1_neuron['object'].cell_obj.sec(0.5))
+                stim.delay = time * 1000
+                stim.dur = dur * 1000
                 stim.amp = 0.30*this_amplitude[t]
                 stims.append(stim)
                 
@@ -247,30 +234,58 @@ class IzhiModularizedNetwork(object):
             v_vector.record(l1_neuron['object'].cell_obj.sec(0.5)._ref_v)
             self.cell_attributes[l1_gid]['voltage'] = v_vector
             self.cell_attributes[l1_gid]['iclamp']  = stims
+
+        l2_neurons = get_layer(self.cell_attributes, layer=2)
+        for l2_gid in sorted(l2_neurons.keys()):
+            l2_neuron = l2_neurons[l2_gid]
+            v_vector = h.Vector()
+            v_vector.record(l2_neuron['object'].cell_obj.sec(0.5)._ref_v)
+            self.cell_attributes[l2_gid]['voltage'] = v_vector
+
         t_vector = h.Vector()
         t_vector.record(h._ref_t)
 
         h.dt = self.__dt
-        h.tstop = time[-1]
+        h.tstop = times[-1] * 1000.
         h.run()
 
         self.kuramoto_sim_time = np.asarray(list(t_vector), dtype='float32')
 
-    def __extract_spike_times(self):
+    def extract_spike_times(self, layer=1):
         gid_spikes = {}
-        l1_neurons = self.__get_layer(layer=1)
-        for l1_gid in sorted(l1_neurons.keys()):
+        layer_neurons = get_layer(self.cell_attributes, layer=layer)
+        time    = self.kuramoto_sim_time
+        for gid in sorted(layer_neurons.keys()):
+            layer_neuron = layer_neurons[gid]
+            voltage = layer_neuron['voltage']
+            spike_times = extract_spikes(voltage, time)
+            gid_spikes[gid] = spike_times
+        self.spiketrains[layer] = gid_spikes
+
+    def get_connectivity_matrix(self):
+        l1_neurons = get_layer(self.cell_attributes, layer=1)
+        l2_neurons = get_layer(self.cell_attributes, layer=2)
+
+        l1_gids, l2_gids = sorted(l1_neurons.keys()), sorted(l2_neurons.keys())
+        min_gid, max_gid = np.min(l1_gids), np.max(l2_gids)
+        ngids = max_gid - min_gid + 1
+        conn_matrix = np.zeros((ngids, ngids))
+
+        for l2_gid in l2_gids:
+            l2_neuron = l2_neurons[l2_gid]
+            l2_connections = l2_neuron['connections']
+            for (src_gid, _) in l2_connections:
+                conn_matrix[src_gid - min_gid, l2_gid - min_gid] = 1
+
+        for l1_gid in l1_gids:
             l1_neuron = l1_neurons[l1_gid]
-            voltage = l1_neuron['voltage']
-            time    = self.kuramoto_sim_time
-            spike_times, spike_lst = extract_spikes(voltage, time)
-            gid_spikes[l1_gid]['times'] = spike_times
-            gid_spikes[l1_gid]['list']  = spike_lst
-        self.l1_spikes = gid_spikes
-            
+            l1_connections= l1_neuron['connections']
+            for (src_gid, _) in l1_connections:
+                conn_matrix[src_gid - min_gid, l1_gid - min_gid] = 1
+
+        return conn_matrix
 
 class MicrocircuitModule(object):
-
     def __init__(self, region_id, nid_start, npairs, excitatory_cell_type='RS', inhibitory_cell_type='FS'):
         self.__region_id = region_id
         self.__nid_start = nid_start
@@ -280,36 +295,41 @@ class MicrocircuitModule(object):
 
         self.excitatory_neurons = None
         self.inhibitory_neurons = None
-        self.nc_lst = None
 
         self.excitatory_neurons = generate_neurons(self.__npairs, self.__nid_start, self.__excitatory_cell_type)
         self.inhibitory_neurons = generate_neurons(self.__npairs, self.__nid_start+self.__npairs, self.__inhibitory_cell_type)
 
-    def generate_feedback_connection(self, syn_w, syn_delay):
-        self.nc_lst = generate_feedback_connection(self.excitatory_neurons, self.inhibitory_neurons, syn_w, syn_delay)
         
 class Cell(object):
 
     def __init__(self, cell_obj):
         self.cell_obj = cell_obj
-        self.synapse  = None
+        self.e_synapse = None
+        self.i_synapse = None
 
-    def create_synapse(self):
+    def create_synapse(self, syn_type):
+        if syn_type == 'e' and self.e_synapse is not None: return
+        if syn_type == 'i' and self.i_synapse is not None: return
         syn = h.Exp2Syn(self.cell_obj.sec(0.5))
-        #syn.tau = 2.
-        self.synapse = syn
+        if syn_type == 'e':
+            syn.e = 0.0
+            self.e_synapse = syn
+        else:
+            syn.e = -75.0
+            self.i_synapse = syn
         
 def generate_neurons(N, id_start, cell_type):
     return [Cell(IzhiCell(cell_type, i + id_start)) for i in range(N)]
 
-def generate_nc_connection(tgt, src, syn_w, syn_delay):
-    if tgt.synapse is None:
-        src.create_synapse()
-    nc = connect_cells(tgt, src, syn_w, syn_delay)
+def generate_nc_connection(tgt, src, syn_w, syn_delay, syn_type):
+    tgt.create_synapse(syn_type)
+    nc = connect_cells(tgt, src, syn_w, syn_delay, syn_type)
     return nc
 
-def connect_cells(post, pre, syn_w, syn_delay):
-    tgt_syn = post.synapse
+def connect_cells(post, pre, syn_w, syn_delay, syn_type):
+    if syn_type == 'i':
+        tgt_syn = post.i_synapse
+    else: tgt_syn = post.e_synapse
     nc = h.NetCon(pre.cell_obj.sec(0.5)._ref_v, tgt_syn, sec=pre.cell_obj.sec)
     nc.weight[0] = syn_w
     nc.delay     = syn_delay
