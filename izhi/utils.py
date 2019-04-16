@@ -64,6 +64,30 @@ def run_neuron_simulation(cell, inputs, times):
 
     return deepcopy(list(soma_v_vec)), deepcopy(list(t_vec))
 
+def get_synch_from_voltages(cells):
+    if cells == {}:
+        raise Exception('cell attributes is not populated..')
+    from scipy.signal import hilbert
+    import cmath
+
+    voltages = []
+    for gid in sorted(cells.keys()):
+        voltage = cells[gid]['voltage']
+        voltages.append(voltage)
+
+    phases = []
+    for voltage in voltages:
+        phases.append(np.unwrap(np.angle(hilbert(voltage))))
+    phases = np.asarray(phases)
+    N, T   = phases.shape
+    avg_phase = np.mean(phases,axis=0)
+
+    r_lst = []
+    for (t,avg) in enumerate(avg_phase):
+        this_phases = phases[:,t]
+        this_r = 1./float(N) * np.sum([cmath.exp(1j*(tp - avg)) for tp in this_phases])
+        r_lst.append(np.absolute(this_r))
+    return np.asarray(r_lst, dtype='float32')
 
 def get_layer(cells, layer):
     if cells == {}:
