@@ -89,6 +89,16 @@ def get_synch_from_voltages(cells):
         r_lst.append(np.absolute(this_r))
     return np.asarray(r_lst, dtype='float32')
 
+def get_cell_type(cells, cell_type='e'):
+    if cells == {}:
+        raise Exception('cell attributes is not populated..')
+    neurons = {}
+    for gid in sorted(cells.keys()):
+        this_neuron = cells[gid]
+        if this_neuron['type'] == cell_type:
+            neurons[gid] = this_neuron
+    return neurons
+
 def get_layer(cells, layer):
     if cells == {}:
         raise Exception('cell attributes is not populated..')
@@ -97,6 +107,19 @@ def get_layer(cells, layer):
         this_neuron = cells[gid]
         if this_neuron['layer'] == layer:
             neurons[gid] = this_neuron
+    return neurons
+
+def get_module(cells, layer=1, module=1, cell_type='both'):
+    if cells == {}:
+        raise Exception('cell attributes is not populated...')
+    neurons = {}
+    for gid in sorted(cells.keys()):
+        this_neuron = cells[gid]
+        if this_neuron['layer'] == layer and this_neuron['module'] == module:
+            if cell_type == 'both':
+                neurons[gid] = this_neuron
+            elif cell_type == this_neuron['type']:
+                neurons[gid] = this_neuron
     return neurons
 
 def get_spikes_from_cell_type(attr_dict, spike_dict, cell_type='e'):
